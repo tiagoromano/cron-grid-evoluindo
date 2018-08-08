@@ -1,7 +1,7 @@
 {
 	"auth": {
 		"customId": "auth",
-		"queryName": "{{AUTHENTICATE}}",
+		"queryName": "Autenticar",
 		"screen": "",
 		"sourceType": "entityFullName",
 		"blockly": null,
@@ -60,7 +60,7 @@
 	},
 	"roles": {
 		"customId": "roles",
-		"queryName": "{{GET_ROLES}}",
+		"queryName": "Obter Autorização",
 		"screen": "",
 		"sourceType": "entityFullName",
 		"blockly": null,
@@ -113,7 +113,7 @@
 	},
 	"tenant": {
 		"customId": "tenant",
-		"queryName": "{{GET_TENANT_ID}}",
+		"queryName": "Obter Id de Multi-inquilino",
 		"screen": "",
 		"sourceType": "entityFullName",
 		"blockly": null,
@@ -134,7 +134,9 @@
 			"PUT": false,
 			"PUTAuthorities": null,
 			"DELETE": false,
-			"DELETEAuthorities": null
+			"DELETEAuthorities": null,
+			"FILTER": true,
+			"FILTERAuthorities": null
 		},
 		"events": {
 			"beforeInsert": null,
@@ -164,6 +166,8 @@
 			"password": null,
 			"theme": null
 		},
+		"calcFields": {},
+		"calcFieldsSecurity": {},
 		"errorHandles": {
 			"primaryKey": null,
 			"foreignKey": null

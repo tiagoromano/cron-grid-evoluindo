@@ -1028,9 +1028,11 @@
 
           var waitRender = setInterval(function() {
             if ($('#' + buttonId).length > 0) {
-              var x = angular.element($('#' + buttonId ));
-              $compile(x)(scope);
-              clearInterval(waitRender);
+              scope.safeApply(function() {
+                var x = angular.element($('#' + buttonId ));
+                $compile(x)(scope);
+                clearInterval(waitRender);
+              });
             }
           },200);
 
@@ -1139,7 +1141,15 @@
             }
           }
           return formated
-        }
+        };
+        
+        window.useMask = function(value, format, type) {
+          var mask = '';
+          if (value) {
+            mask = '{{ "' + value + '"  | mask:"' + type + '"}}';
+          }
+          return mask;
+        };
 
         function getTemplate(column) {
           var template = undefined;
@@ -1169,9 +1179,13 @@
               template = "#="+column.displayField+"#";
             }
           }
+          // else if (column.type.startsWith('date') || column.type.startsWith('month')
+          //     || column.type.startsWith('time') || column.type.startsWith('week')) {
+          //   template = "#= formatDate("+column.field+",'"+column.format+"','"+column.type+"') #";
+          // }
           else if (column.type.startsWith('date') || column.type.startsWith('month')
               || column.type.startsWith('time') || column.type.startsWith('week')) {
-            template = "#= formatDate("+column.field+",'"+column.format+"','"+column.type+"') #";
+            template = "#= useMask("+column.field+",'"+column.format+"','"+column.type+"') #";
           }
           return template;
         }
@@ -1438,9 +1452,15 @@
               }
             }
           }
-          else if (toolbarButton.type == "Blockly" || toolbarButton.type == "SaveOrCancelChanges") {
+          else if (toolbarButton.type == "Blockly") {
             var buttonBlockly = this.generateToolbarButtonCall(toolbarButton, scope);
             toolbar.push(buttonBlockly);
+          }
+          else if (toolbarButton.type == "SaveOrCancelChanges") {
+            if (options.editable != 'no') {
+              var buttonSaveOrCancel = this.generateToolbarButtonCall(toolbarButton, scope);
+              toolbar.push(buttonSaveOrCancel);
+            }
           }
           else if (toolbarButton.type == "Template") {
             var buttonTemplate =  {
@@ -1612,7 +1632,17 @@
             this.dataSource.transport.options.enableAndSelect(e);
           },
           dataBound: function(e) {
+            debugger;
             this.dataSource.transport.options.selectActiveInGrid();
+            //Compilando as diretivas de exibição da grade (listagem)
+            if (e.sender.tbody && e.sender.tbody.length) {
+              scope.safeApply(function() {
+                var trs = $(e.sender.tbody).find('tr');
+                var x = angular.element(trs);
+                $compile(x)(scope);
+              });
+            }
+            
           }
         };
 
