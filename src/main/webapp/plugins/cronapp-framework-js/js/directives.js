@@ -1123,30 +1123,18 @@
       getColumns: function(options, datasource, scope) {
         var directiveContext = this;
         
-        window.formatDate = function(value, format, type) {
-          var momentDate;
-          var formated = '';
-
-          if (value) {
-            if (type == 'date' || type == 'datetime' || type == 'time')
-              momentDate = moment.utc(value);
-            else
-              momentDate = moment(value);
-
-            if (format && format != "null")
-              formated = momentDate.format(format);
-            else {
-              format= parseMaskType(type, $translate);
-              formated = momentDate.format(format);
-            }
-          }
-          return formated
-        };
-        
         window.useMask = function(value, format, type) {
           var mask = '';
+          format = format == 'null' ? undefined : format;
+          
+          var resolvedValue = value;
+          var resolvedType = format || type;
+          
           if (value) {
-            mask = '{{ "' + value + '"  | mask:"' + type + '"}}';
+            if (value instanceof Date)
+              resolvedValue = value.toISOString();
+            
+            mask = '{{ "' + resolvedValue + '"  | mask:"' + resolvedType + '"}}';
           }
           return mask;
         };
@@ -1157,7 +1145,7 @@
             template = "<input type='checkbox' class='k-checkbox' #=" + column.field + " ? \"checked='checked'\": '' # />" +
                 "<label class='k-checkbox-label k-no-text'></label>"
           }
-          if (column.inputType == 'switch') {
+          else if (column.inputType == 'switch') {
             template =
                 '<span class="k-switch km-switch k-widget km-widget k-switch-off km-switch-off" style="width: 100%">\
                   <span class="k-switch-wrapper km-switch-wrapper">\
@@ -1169,30 +1157,32 @@
                   </span>\
                 </span>';
           }
-
           else if (column.displayField && column.displayField.length > 0) {
             if (column.type.startsWith('date') || column.type.startsWith('month')
-                || column.type.startsWith('time') || column.type.startsWith('week')) {
-              template = "#= formatDate("+column.displayField+",'"+column.format+"','"+column.type+"') #";
+              || column.type.startsWith('time') || column.type.startsWith('week')
+              || column.type.startsWith('money') || column.type.startsWith('number')
+              || column.type.startsWith('tel') || (column.format && column.format != 'null')) {
+              template = "#= useMask("+column.displayField+",'"+column.format+"','"+column.type+"') #";
             }
             else {
               template = "#="+column.displayField+"#";
             }
           }
-          // else if (column.type.startsWith('date') || column.type.startsWith('month')
-          //     || column.type.startsWith('time') || column.type.startsWith('week')) {
-          //   template = "#= formatDate("+column.field+",'"+column.format+"','"+column.type+"') #";
-          // }
           else if (column.type.startsWith('date') || column.type.startsWith('month')
-              || column.type.startsWith('time') || column.type.startsWith('week')) {
+              || column.type.startsWith('time') || column.type.startsWith('week')
+              || column.type.startsWith('money') || column.type.startsWith('number')
+              || column.type.startsWith('tel') || (column.format && column.format != 'null')   ) {
             template = "#= useMask("+column.field+",'"+column.format+"','"+column.type+"') #";
           }
           return template;
         }
 
         function getFormat(column) {
-          if (column.format && !column.type.startsWith('date') && !column.type.startsWith('time')
-              && !column.type.startsWith('month') && !column.type.startsWith('week'))
+          if (!column.type.startsWith('date') && !column.type.startsWith('month')
+              && !column.type.startsWith('time') && !column.type.startsWith('week')
+              && !column.type.startsWith('money') && !column.type.startsWith('number')
+              && !column.type.startsWith('tel')
+            )
             return column.format;
           return undefined;
         }
@@ -1563,6 +1553,17 @@
           if (!(cronappDatasource.inserting || cronappDatasource.editing))
             scope.safeApply(cronappDatasource.goTo(item));
         };
+        
+        var compileListing = function(e) {
+          //Compilando as diretivas de exibição da grade (listagem)
+          if (e.sender.tbody && e.sender.tbody.length) {
+            scope.safeApply(function() {
+              var trs = $(e.sender.tbody).find('tr');
+              var x = angular.element(trs);
+              $compile(x)(scope);
+            });
+          }
+        };
 
         var datasource = app.kendoHelper.getDataSource(options.dataSourceScreen.entityDataSource, scope, options.allowPaging, options.pageCount, options.columns);
 
@@ -1624,7 +1625,8 @@
           change: function(e) {
             var item = this.dataItem(this.select());
             setToActiveInCronappDataSource.bind(this)(item);
-            collapseAllExcecptCurrent(this, this.select().next(), this.select() );
+            collapseAllExcecptCurrent(this, this.select().next(), this.select());
+            compileListing(e);
           },
           cancel: function(e) {
             var cronappDatasource = this.dataSource.transport.options.cronappDatasource;
@@ -1632,17 +1634,10 @@
             this.dataSource.transport.options.enableAndSelect(e);
           },
           dataBound: function(e) {
-            debugger;
             this.dataSource.transport.options.selectActiveInGrid();
-            //Compilando as diretivas de exibição da grade (listagem)
-            if (e.sender.tbody && e.sender.tbody.length) {
-              scope.safeApply(function() {
-                var trs = $(e.sender.tbody).find('tr');
-                var x = angular.element(trs);
-                $compile(x)(scope);
-              });
-            }
-            
+            //Colocando para compilar a listagem no databound quando a grade não permitir seleção, pois não passa no change
+            if (!options.allowSelectionRow)
+              compileListing(e);
           }
         };
 

@@ -148,6 +148,14 @@ public class PedidoItem implements Serializable {
   private java.lang.String campo14;
 
   /**
+  * @generated
+  */
+  @Temporal(TemporalType.TIMESTAMP)
+  @Column(name = "dataHora", nullable = true, unique = false, insertable=true, updatable=true)
+  
+  private java.util.Date dataHora;
+
+  /**
    * Construtor
    * @generated
    */
@@ -492,6 +500,26 @@ public class PedidoItem implements Serializable {
    */
   public PedidoItem setCampo14(java.lang.String campo14){
     this.campo14 = campo14;
+    return this;
+  }
+
+  /**
+   * Obtém dataHora
+   * return dataHora
+   * @generated
+   */
+  
+  public java.util.Date getDataHora(){
+    return this.dataHora;
+  }
+
+  /**
+   * Define dataHora
+   * @param dataHora dataHora
+   * @generated
+   */
+  public PedidoItem setDataHora(java.util.Date dataHora){
+    this.dataHora = dataHora;
     return this;
   }
 
