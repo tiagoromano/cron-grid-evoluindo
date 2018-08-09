@@ -2049,110 +2049,111 @@
   })
 
   .directive('cronDate', ['$compile', '$translate', '$window', function ($compile, $translate, $window) {
-    return {
-      restrict: 'AE',
-      require: '?ngModel',
-      link: function (scope, element, attrs, ngModelCtrl) {
-        var options = {};
-        var cronDate = {};
-        
-        try {
-          if (attrs.options)
-            cronDate =  JSON.parse(attrs.options);
-          else {
-            var json = window.buildElementOptions(element);
-            cronDate = JSON.parse(json);
-          }
-          if (!cronDate.format) {
-            cronDate.format = parseMaskType(cronDate.type, $translate)
-          }
-          options = app.kendoHelper.getConfigDate($translate, cronDate);
-        } catch(err) {
-          console.log('AutoComplete invalid configuration! ' + err);
-        }
-        
-        var useUTC = options.type == 'date' || options.type == 'datetime' || options.type == 'time';
+        return {
+          restrict: 'AE',
+          require: '?ngModel',
+          link: function (scope, element, attrs, ngModelCtrl) {
+            var options = {};
+            var cronDate = {};
+
+            try {
+              if (attrs.options)
+                cronDate =  JSON.parse(attrs.options);
+              else {
+                var json = window.buildElementOptions(element);
+                cronDate = JSON.parse(json);
+              }
+              if (!cronDate.format) {
+                cronDate.format = parseMaskType(cronDate.type, $translate)
+              }
+              options = app.kendoHelper.getConfigDate($translate, cronDate);
+            } catch(err) {
+              console.log('AutoComplete invalid configuration! ' + err);
+            }
+
+            var useUTC = options.type == 'date' || options.type == 'datetime' || options.type == 'time';
 
 
-        var $element;
-        if (attrs.fromGrid) {
-          $element = $(element);
-        }
-        else {
-          var parent = element.parent();
-          var $input = $('<input style="width: 100%;" class="cronDate" ng-model="' + attrs.ngModel + '"/>');
-          $(parent).append($input);
-          $element = $(parent).find('input.cronDate');
-          $element.data("type", options.type);
-          $element.attr("type", "date");
-        }
-        
-        var datePicker = app.kendoHelper.buildKendoMomentPicker($element, options, scope, ngModelCtrl); 
-        
-        if (attrs.fromGrid) {
-          var unmaskedvalue = function() {
-            var momentDate = null;
-           
-            var valueDate =  $(this).val();
-            if ($(this).data('initial-date')) {
-              valueDate = $(this).data('initial-date');
-              $(this).data('initial-date', null);
+            var $element;
+            if (attrs.fromGrid) {
+              $element = $(element);
             }
-            
-            if (useUTC) {
-              momentDate = moment.utc(valueDate, options.momentFormat);
-            } else {
-              momentDate = moment(valueDate, options.momentFormat);
+            else {
+              var parent = element.parent();
+              var $input = $('<input style="width: 100%;" class="cronDate" ng-model="' + attrs.ngModel + '"/>');
+              $(parent).append($input);
+              $element = $(parent).find('input.cronDate');
+              $element.data("type", options.type);
+              $element.attr("type", "date");
             }
-            
-            datePicker.value(momentDate.format(options.momentFormat));
-            $(this).data('rawvalue', momentDate.toDate());
-          }
-          $(element).on('keydown', unmaskedvalue).on('keyup', unmaskedvalue).on('change', unmaskedvalue);
-          unmaskedvalue.bind($element)();
-        }
-        else {
-          if (ngModelCtrl) {
-            ngModelCtrl.$formatters.push(function (value) {
-              var selDate = null;
-              
-              if (value) {
+
+            var datePicker = app.kendoHelper.buildKendoMomentPicker($element, options, scope, ngModelCtrl);
+
+            if (attrs.fromGrid) {
+              var initialDate = $element.data('initial-date');
+              var unmaskedvalue = function() {
                 var momentDate = null;
-  
-                if (useUTC) {
-                  momentDate = moment.utc(value);
-                } else {
-                  momentDate = moment(value);
+
+                var valueDate =  $(this).val();
+                if (initialDate) {
+                  valueDate = initialDate;
+                  initialDate = undefined;
                 }
-  
-                selDate = momentDate.format(options.momentFormat);
-              }
-              
-              datePicker.value(selDate);
-  
-              return selDate;
-            });
-  
-            ngModelCtrl.$parsers.push(function (value) {
-              if (value) {
-                var momentDate = null;
+
                 if (useUTC) {
-                  momentDate = moment.utc(datePicker._oldText, options.momentFormat);
+                  momentDate = moment.utc(valueDate, options.momentFormat);
                 } else {
-                  momentDate = moment(datePicker._oldText, options.momentFormat);
+                  momentDate = moment(valueDate, options.momentFormat);
                 }
-                return momentDate.toDate();
+
+                datePicker.value(momentDate.format(options.momentFormat));
+                $(this).data('rawvalue', momentDate.toDate());
               }
-  
-              return null;
-            });
+              $(element).on('keydown', unmaskedvalue).on('keyup', unmaskedvalue).on('change', unmaskedvalue);
+              unmaskedvalue.bind($element)();
+            }
+            else {
+              if (ngModelCtrl) {
+                ngModelCtrl.$formatters.push(function (value) {
+                  var selDate = null;
+
+                  if (value) {
+                    var momentDate = null;
+
+                    if (useUTC) {
+                      momentDate = moment.utc(value);
+                    } else {
+                      momentDate = moment(value);
+                    }
+
+                    selDate = momentDate.format(options.momentFormat);
+                  }
+
+                  datePicker.value(selDate);
+
+                  return selDate;
+                });
+
+                ngModelCtrl.$parsers.push(function (value) {
+                  if (value) {
+                    var momentDate = null;
+                    if (useUTC) {
+                      momentDate = moment.utc(datePicker._oldText, options.momentFormat);
+                    } else {
+                      momentDate = moment(datePicker._oldText, options.momentFormat);
+                    }
+                    return momentDate.toDate();
+                  }
+
+                  return null;
+                });
+              }
+
+              $(element).remove();
+            }
           }
-          
-          $(element).remove();
         }
-      }
-    }
-  }])
+      }])
   
   .directive('cronSlider', function ($compile) {
     return {
